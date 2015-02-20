@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -O2 -g -DNDEBUG   -shared -Wl,-soname,libgtest.so -o /home/exm/workspace/bugs/lib/libgtest.so CMakeFiles/gtest.dir/src/gtest-all.cc.o  -L/home/exm/workspace/bugs/build/gtest/src -lpthread -Wl,-rpath,/home/exm/workspace/bugs/build/gtest/src 
