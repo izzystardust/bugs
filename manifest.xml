@@ -9,8 +9,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bugs</url>
   <depend package="geometry_msgs"/>
+  <depend package="sensor_msgs" />
+  <depend package="nav_msgs" />
   <depend package="rospy"/>
-  <depend package="roscpp"/>
 
 </package>
 
