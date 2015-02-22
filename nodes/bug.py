@@ -55,16 +55,18 @@ def mover(cin):
             cmd = Twist()
             cmd.angular.z = -0.5
         elif got == MSG_STOP:
+            cmd = Twist()
+            pub.publish(cmd)
             return
 
         pub.publish(cmd)
 
 @csp.process
 def bug_algorithm(out):
-    while True:
+    init_listener()
+    while current_location.distance(tx, ty) > delta:
         out(GO_ST)
         rospy.sleep(.01)
-
 
 algorithm = sys.argv[1]
 algorithms = ["bug0", "bug1", "bug2"]
@@ -79,12 +81,9 @@ C = csp.Channel()
 csp.Parallel(
         bug_algorithm(C.writer()),
         mover(C.reader()),
-        )
+)
 
-#init_listener()
 
-#while current_location.distance(tx, ty) > delta:
-    #print "Not there yet (", current_location.distance(tx, ty), ")"
-    #rospy.sleep(1)
-#print "There: distance is ", current_location.distance(tx, ty)
-#print "At", current_location.current_location()
+print "Not there yet (", current_location.distance(tx, ty), ")"
+print "There: distance is ", current_location.distance(tx, ty)
+print "At", current_location.current_location()
