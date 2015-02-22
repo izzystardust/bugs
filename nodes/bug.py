@@ -10,15 +10,17 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 
-from location import Location
+from location import Location, necessary_heading
 from dist import Dist
 
 current_location = Location()
 current_dists = Dist()
 
 delta = .1
+WALL_PADDING = .5
 
 GO_ST = 0
+GO_LF = 1
 GO_RT = 2
 MSG_STOP = 3
 
@@ -39,7 +41,7 @@ def location_callback(data):
     current_location.update_location(p.x, p.y, t)
 
 def sensor_callback(data):
-    current_dists.update(data.ranges, data.range_min, data.range_max)
+    current_dists.update(data)
 
 @csp.process
 def mover(cin):
@@ -55,6 +57,9 @@ def mover(cin):
         elif got == GO_ST:
             cmd = Twist()
             cmd.linear.x = 1
+        elif got == GO_LF:
+            cmd = Twist()
+            cmd.angular.z = 0.25
         elif got == GO_RT:
             cmd = Twist()
             cmd.angular.z = -0.25
@@ -69,15 +74,67 @@ def mover(cin):
 def bug_algorithm(out):
     init_listener()
     while current_location.distance(tx, ty) > delta:
-        print "At", current_location.current_location()
-        print "Sensors", current_dists.get()
-        if not current_location.facing_point(tx, ty):
-            out(GO_RT)
-        else:
-            out(GO_ST)
-        rospy.sleep(.01)
+        face_target(out)
+        hit_wall = go_until_obstacle(out)
+        if hit_wall:
+            follow_wall(out)
     out(MSG_STOP)
 
+def go_until_obstacle(out):
+    print "Going forward until destination or obstacle"
+    while current_location.distance(tx, ty) > delta:
+        (frontdist, _) = current_dists.get()
+        if frontdist <= WALL_PADDING:
+            return True
+
+        if current_location.facing_point(tx, ty):
+            out(GO_ST)
+        elif current_location.faster_left(tx, ty):
+            out(GO_LF)
+        else:
+            out(GO_RT)
+        rospy.sleep(.01)
+    return False
+
+def face_target(out):
+    print "Turning to face destination"
+    while not current_location.facing_point(tx, ty):
+        if current_location.faster_left(tx, ty):
+            out(GO_LF)
+        else:
+            out(GO_RT)
+        rospy.sleep(.01)
+
+def follow_wall(out):
+    print "Following wall"
+    while current_dists.get()[0] <= WALL_PADDING:
+        out(GO_RT)
+        rospy.sleep(.01)
+    while not should_leave_wall():
+        (front, left) = current_dists.get()
+        if front <= WALL_PADDING:
+            out(GO_RT)
+        elif WALL_PADDING - .1 <= left <= WALL_PADDING + .1:
+            out(GO_ST)
+        elif left > WALL_PADDING + .1:
+            out(GO_LF)
+        else:
+            out(GO_RT)
+        rospy.sleep(.01)
+
+def go_a_little(out):
+    for i in range(0, 10):
+        out(GO_ST)
+        rospy.sleep(.1)
+
+def should_leave_wall():
+    (x, y, t) = current_location.current_location()
+    dir_to_go = current_location.global_to_local(necessary_heading(x, y, tx, ty))
+    at = current_dists.at(dir_to_go)
+    print "At", dir_to_go, ":", at
+    if at > 3:
+        return True
+    return False
 
 # Parse arguments
 algorithm = sys.argv[1]

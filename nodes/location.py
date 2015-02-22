@@ -43,6 +43,20 @@ class Location:
         # TODO(exm) possible bug with boundary conditions?
         return n - self.deltaT <= current_heading <= n + self.deltaT
 
+    def faster_left(self, x, y):
+        (cx, cy, current_heading) = self.current_location()
+        if None in (cx, cy, current_heading):
+            return False
+        return current_heading - necessary_heading(cx, cy, x, y) < 0
+
+    def global_to_local(self, desired_angle):
+        (_, _, current_heading) = self.current_location()
+        ans = desired_angle - current_heading
+        if ans < -math.pi:
+            ans += math.pi
+        return ans
+
+
 # current x, y; target x,y
 def necessary_heading(cx, cy, tx, ty):
     return math.atan2(ty-cy, tx-cx)
