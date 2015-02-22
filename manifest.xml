@@ -8,7 +8,6 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bugs</url>
-  <depend package="robot_mover"/>
   <depend package="geometry_msgs"/>
   <depend package="rospy"/>
   <depend package="roscpp"/>
