@@ -13,7 +13,10 @@ Running:
 
 where 0, 1, or 2 is the bug algorithm of interest.
 
+Stage should be running before the bug program is deployed.
+
 Known bugs:
 -----------
 
-- Doesn't work.
+- In some cases, can hit corner of obstacle without detection.
+- A case in wall following can lead to the robot sitting in a corner and twitching. A literal corner case, if you will.
