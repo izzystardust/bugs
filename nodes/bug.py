@@ -73,15 +73,20 @@ def mover(cin):
 @csp.process
 def bug_algorithm(out):
     init_listener()
+    print "Calibrating sensors..."
+    # This actually just lets the sensor readings propagate into the system
+    rospy.sleep(1)
+    print "Calibrated"
+
     while current_location.distance(tx, ty) > delta:
-        face_target(out)
         hit_wall = go_until_obstacle(out)
         if hit_wall:
             follow_wall(out)
     out(MSG_STOP)
+    print "Arrived at", (tx, ty)
 
 def go_until_obstacle(out):
-    print "Going forward until destination or obstacle"
+    print "Going until destination or obstacle"
     while current_location.distance(tx, ty) > delta:
         (frontdist, _) = current_dists.get()
         if frontdist <= WALL_PADDING:
@@ -95,15 +100,6 @@ def go_until_obstacle(out):
             out(GO_RT)
         rospy.sleep(.01)
     return False
-
-def face_target(out):
-    print "Turning to face destination"
-    while not current_location.facing_point(tx, ty):
-        if current_location.faster_left(tx, ty):
-            out(GO_LF)
-        else:
-            out(GO_RT)
-        rospy.sleep(.01)
 
 def follow_wall(out):
     print "Following wall"
@@ -122,17 +118,12 @@ def follow_wall(out):
             out(GO_RT)
         rospy.sleep(.01)
 
-def go_a_little(out):
-    for i in range(0, 10):
-        out(GO_ST)
-        rospy.sleep(.1)
-
 def should_leave_wall():
     (x, y, t) = current_location.current_location()
     dir_to_go = current_location.global_to_local(necessary_heading(x, y, tx, ty))
     at = current_dists.at(dir_to_go)
-    print "At", dir_to_go, ":", at
-    if at > 3:
+    if at > 5:
+        print "leaving at", at
         return True
     return False
 
@@ -155,7 +146,3 @@ csp.Parallel(
         bug_algorithm(C.writer()),
         mover(C.reader()),
 )
-
-
-print "There: distance is ", current_location.distance(tx, ty)
-print "At", current_location.current_location()

@@ -51,7 +51,6 @@ class Dist:
                 return sys.maxint
         self.m.acquire()
         i = self.angle_to_index(angle)
-        print "Using index", i
         start = i - 40
         if start < 0:
             start = 0
