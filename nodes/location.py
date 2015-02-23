@@ -53,7 +53,7 @@ class Location:
         (_, _, current_heading) = self.current_location()
         ans = desired_angle - current_heading
         if ans < -math.pi:
-            ans += math.pi
+            ans += 2* math.pi
         return ans
 
 
