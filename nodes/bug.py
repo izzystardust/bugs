@@ -61,7 +61,7 @@ class Bug:
         self.initial = (None, None)
         self.target = (tx, ty)
         self.bat = 100
-        self.speed = 1
+        self.speed = .5
         self.state = "GO_UNTIL_OBSTACLE"
         self.states = {
             'GO_UNTIL_OBSTACLE': lambda x: x.go_until_obstacle(),
