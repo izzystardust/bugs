@@ -102,7 +102,7 @@ class Bug0(Bug):
         (x, y, t) = current_location.current_location()
         dir_to_go = current_location.global_to_local(necessary_heading(x, y, tx, ty))
         at = current_dists.at(dir_to_go)
-        if at > 5:
+        if at > 10:
             print "Leaving wall"
             return True
         return False
