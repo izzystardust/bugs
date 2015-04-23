@@ -47,6 +47,7 @@ class Bug:
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         self.tx = tx
         self.ty = ty
+        self.bat = 100
 
     def go(self, direction):
         cmd = Twist()
@@ -123,14 +124,11 @@ def bug_algorithm():
             bug.follow_wall()
     print "Arrived at", (tx, ty)
 
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print "Usage: rosrun bugs bug.py X Y"
+        sys.exit(1)
 
-
-if len(sys.argv) < 3:
-    print "Usage: rosrun bugs bug.py X Y"
-    sys.exit(1)
-(tx, ty) = map(float, sys.argv[1:3])
-
-
-
-print "Setting target:", (tx, ty)
-bug_algorithm()
+    (tx, ty) = map(float, sys.argv[1:3])
+    print "Setting target:", (tx, ty)
+    bug_algorithm()
