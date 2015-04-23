@@ -202,7 +202,7 @@ if __name__ == "__main__":
     (ix, iy, _) = current_location.current_location()
     bug.initial = (ix, iy)
     rospy.Timer(rospy.Duration(10), lambda _: bug.decr_battery())
-    rospy.Timer(rospy.Duration(120), lambda _: bug.return_to_start("2 minutes exceeded"))
+    rospy.Timer(rospy.Duration(120), lambda _: bug.return_to_start("2 minutes exceeded. Returning to start"))
 
     while current_location.distance(*bug.target) > delta:
         bug.step()

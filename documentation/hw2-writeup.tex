@@ -1,0 +1,49 @@
+\documentclass[12pt]{article}
+
+\title{Mobile Robotics and HRI: Homework 2}
+\author{Ethan Miller\\0278718}
+\date{\today}
+
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+\maketitle
+
+The robot state space consisted of two components: a map of functions, keeping
+track of how the robot was accomplishing its current goal, and a set of booleans,
+keeping track of how the robot was changing its goals and prompting the user.
+
+The core of the robot execution is the Bug.step() method, which is called once
+every 10ms. It first updates the state based on the map of state functions, which
+each return the next state that should be entered if no other factors applied. It
+then checks each of the conditions for prompting the user and the booleans
+controlling their triggers, asking and changing the goal and speed as appropriate.
+
+The only exceptions to this flow of control are two timers: One that decrements
+the battery, and another that triggers after two minutes to tell the robot to
+return to the goal. It is worth noting that while the robot waits for user input,
+this two minute timer continues to count down and may cause the robot to act
+differently than expected.
+
+To prompt the user, the robot asks a binary question; that is, a question with
+only two possible answers. One is indicated as the default choice. If any answer
+besides the nondefault choice is made, the default choice is taken instead of
+reprompting the user. Because the default answers are ``safe'' answers, this
+approach was taken over reprompting until a valid answer is given; additionally,
+this approach is easier programatically. While waiting for user answers, the
+robot pauses all actions.
+
+Alternative prompts were considered, but discarded. A graphical prompt was
+left behind due to relative difficulty for a relatively insignificant gain in
+obviousness given the safety of the actions taken by the simulated robot.
+Contacting the user via phone fell out of the running for the same. The prompts
+could also be on the robot, but a simulated square robot made that impractical.
+
+To inform the user of decisions made, the robot prints to the console. Due to the
+safety and low-priority of the user acknowledging these decisions, this approach
+is defensible. If the user's awareness was a priority, alternative methods of
+informing would be necessary: options include cell phone notifications, active
+prompts on the computer (either at the command line or as a GUI), or an indication
+of such on the physical robot.
+
+\end{document}
