@@ -42,11 +42,13 @@ def location_callback(data):
 def sensor_callback(data):
     current_dists.update(data)
 
+
+
 class Bug:
     def __init__(self, tx, ty):
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-        self.tx = tx
-        self.ty = ty
+        self.initial = (None, None)
+        self.target = (tx, ty)
         self.bat = 100
         self.speed = 1
         self.state = "GO_UNTIL_OBSTACLE"
@@ -59,9 +61,9 @@ class Bug:
         (front, _) = current_dists.get()
         if front <= WALL_PADDING:
             return "FOLLOW_WALL"
-        if current_location.facing_point(tx, ty):
+        if current_location.facing_point(*self.target):
             self.go(STRAIGHT, self.speed)
-        elif current_location.faster_left(tx, ty):
+        elif current_location.faster_left(*self.target):
             self.go(LEFT, self.speed)
         else:
             self.go(RIGHT, self.speed)
@@ -87,13 +89,10 @@ class Bug:
 
     def should_leave_wall(self):
         (x, y, t) = current_location.current_location()
-        dir_to_go = current_location.global_to_local(necessary_heading(x, y, tx, ty))
-        at = current_dists.at(dir_to_go)
+        g = current_location.global_to_local(necessary_heading(x, y, *self.target))
+        at = current_dists.at(g)
         (_, left) = current_dists.get()
-        if at > 10 and left > 10:
-            print "Leaving wall"
-            return True
-        return False
+        return at > 10 and left > 10
 
     def go(self, direction, speed):
         cmd = Twist()
@@ -124,6 +123,8 @@ if __name__ == "__main__":
     # This actually just lets the sensor readings propagate into the system
     rospy.sleep(1)
     print "Calibrated"
+    (ix, iy, _) = current_location.current_location()
+    bug.initial = (ix, iy)
 
-    while current_location.distance(tx, ty) > delta:
+    while current_location.distance(*bug.target) > delta:
         bug.step()
