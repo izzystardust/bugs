@@ -33,9 +33,13 @@ chargers = [
     (6, -10),
 ]
 
-def closest_charger(x, y):
-    pairs = map(lambda p: (p[0]-x)**2 + (p[1]-y)**2, chargers)
-    return filter(lambda p: p[0] == min(pairs), zip(pairs, chargers))[0][1]
+# returns the euclidean_distance between (x1, y1) and (x2, y2)
+def euclidean_distance(p1, p2):
+    return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
+
+def closest_in(points, x, y):
+    ds = map(lambda p: euclidean_distance(p, (x, y)), points)
+    return filter(lambda p: p[0] == min(ds), zip(ds, points))[0][1]
 
 def init_listener():
     # Set up all of the ROS subscriptions we'll listen to
@@ -66,7 +70,9 @@ class Bug:
         self.states = {
             'GO_UNTIL_OBSTACLE': lambda x: x.go_until_obstacle(),
             'FOLLOW_WALL': lambda x: x.follow_wall(),
+            'GOTO_CHARGER': lambda x: x.goto_charger(),
         }
+        self.temp_loc = (None, None) # Used to store target when seeking charger
 
     def go_until_obstacle(self):
         (front, _) = current_dists.get()
@@ -98,6 +104,17 @@ class Bug:
         else:
             return "GO_UNTIL_OBSTACLE"
 
+    def goto_charger(self):
+        self.temp_loc = self.target
+        self.target = closest_in(chargers, *current_location.current_location()[0:2])
+        print "Going to charger at ", self.target
+        return "GO_UNTIL_OBSTACLE"
+
+    def goto_dest(self):
+        self.target = self.temp_loc
+        self.bat = 100
+        print "Returning to path to target charged."
+
     def should_leave_wall(self):
         (x, y, t) = current_location.current_location()
         g = current_location.global_to_local(necessary_heading(x, y, *self.target))
@@ -119,12 +136,16 @@ class Bug:
 
     def step(self):
         self.state = self.states[self.state](self) # did I stutter?
+        if self.bat < 30 and self.target not in chargers:
+            self.state = "GOTO_CHARGER"
+        if (self.target in chargers
+            and current_location.distance(*self.target) <= delta+.1):
+            self.goto_dest()
         rospy.sleep(.1)
 
     def decr_battery(self):
         self.bat -= 1
         print "Bat:", self.bat
-
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
