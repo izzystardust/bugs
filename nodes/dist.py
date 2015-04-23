@@ -21,7 +21,7 @@ class Dist:
                 return sys.maxint
 
         newfront = getmin(500, 581)
-        newleft = getmin(740, 900)
+        newleft = getmin(740, 851)
 
         self.m.acquire()
         self.left = newleft

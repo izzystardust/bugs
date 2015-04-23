@@ -35,7 +35,7 @@ chargers = [
 
 # returns the euclidean_distance between (x1, y1) and (x2, y2)
 def euclidean_distance(p1, p2):
-    return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
 def closest_in(points, x, y):
     ds = map(lambda p: euclidean_distance(p, (x, y)), points)
@@ -73,6 +73,9 @@ class Bug:
             'GOTO_CHARGER': lambda x: x.goto_charger(),
         }
         self.temp_loc = (None, None) # Used to store target when seeking charger
+        self.prompted = False # Is really just prompted for faster
+        self.gopast10asked = True # Should start false, but I changed the name
+        self.qat20asked = False
 
     def go_until_obstacle(self):
         (front, _) = current_dists.get()
@@ -110,10 +113,10 @@ class Bug:
         print "Going to charger at ", self.target
         return "GO_UNTIL_OBSTACLE"
 
-    def return_to_start(self):
+    def return_to_start(self, msg):
         self.temp_loc = self.target
         self.target = self.initial
-        print "Two minutes exceeded. Returning to start location."
+        print msg
 
     def goto_dest(self):
         self.target = self.temp_loc
@@ -139,18 +142,49 @@ class Bug:
             pass
         self.pub.publish(cmd)
 
+    def prompt_faster(self):
+        ans = raw_input("Less than 10m to goal. Increase speed? (y/N)")
+        if ans == "y":
+            print "Increasing speed."
+            self.speed = 1
+        else:
+            print "Not increasing speed"
+
     def step(self):
         self.state = self.states[self.state](self) # did I stutter?
-        if self.bat < 30 and self.target not in chargers:
+        if self.bat < 30 and self.target not in chargers and not self.prompted:
             self.state = "GOTO_CHARGER"
         if (self.target in chargers
-            and current_location.distance(*self.target) <= delta+.1):
+            and current_location.distance(*self.target) <= delta+.1
+            and not self.prompted):
             self.goto_dest()
+        (x, y, _) = current_location.current_location()
+        if euclidean_distance(self.target, (x, y)) < 10 and not self.prompted:
+            self.prompt_faster()
+            self.prompted = True
+        if (euclidean_distance(self.initial, (x, y)) > 10
+            and not self.prompted
+            and self.gopast10asked):
+            ans = raw_input("More than 10m from start. Continue? (Y/n)")
+            if ans == "n":
+                self.speed = 0
+                self.prompted = True
+            self.gopast10asked = False
+        if (euclidean_distance(self.initial, (x, y)) > 20
+            and euclidean_distance(self.target, (x, y)) > 20
+            and not self.prompted
+            and not self.qat20asked):
+            ans = raw_input("More than 20 meters from goal and start. [g]oal or [S]tart?")
+            self.qat20asked = True
+            if ans == "g":
+                print "Continuing to goal"
+            else:
+                self.return_to_start("Returning to start")
         rospy.sleep(.1)
 
     def decr_battery(self):
         self.bat -= 1
-        print "Bat:", self.bat
+        #print "Bat:", self.bat
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -168,7 +202,7 @@ if __name__ == "__main__":
     (ix, iy, _) = current_location.current_location()
     bug.initial = (ix, iy)
     rospy.Timer(rospy.Duration(10), lambda _: bug.decr_battery())
-    rospy.Timer(rospy.Duration(120), lambda _: bug.return_to_start())
+    rospy.Timer(rospy.Duration(120), lambda _: bug.return_to_start("2 minutes exceeded"))
 
     while current_location.distance(*bug.target) > delta:
         bug.step()
