@@ -48,7 +48,7 @@ class Dist:
             if len(vsp) > 0:
                 return min(vsp)
             else:
-                return sys.maxint
+                return 0
         self.m.acquire()
         i = self.angle_to_index(angle)
         start = i - 40
