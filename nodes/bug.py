@@ -19,11 +19,13 @@ current_dists = Dist()
 delta = .1
 WALL_PADDING = .5
 
+# These constants are passed to bug.go()
 STRAIGHT = 0
 LEFT = 1
 RIGHT = 2
 MSG_STOP = 3
 
+# charger (x, y) locations
 chargers = [
     (0, 14),
     (2, 2),
@@ -32,23 +34,21 @@ chargers = [
 ]
 
 def init_listener():
+    # Set up all of the ROS subscriptions we'll listen to
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber('base_pose_ground_truth', Odometry, location_callback)
-    rospy.Subscriber('base_scan', LaserScan, sensor_callback)
+    rospy.Subscriber('base_scan', LaserScan, lambda d: current_dists.update(d))
 
 def location_callback(data):
     p = data.pose.pose.position
+    # transform.euler_from_quaternion() takes a tuple
     q = (
             data.pose.pose.orientation.x,
             data.pose.pose.orientation.y,
             data.pose.pose.orientation.z,
             data.pose.pose.orientation.w)
-    t = transform.euler_from_quaternion(q)[2] # in [-pi, pi]
+    t = transform.euler_from_quaternion(q)[2] # (x, y, z)[2] in [-pi, pi]
     current_location.update_location(p.x, p.y, t)
-
-def sensor_callback(data):
-    current_dists.update(data)
-
 
 
 class Bug:
