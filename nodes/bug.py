@@ -33,6 +33,10 @@ chargers = [
     (6, -10),
 ]
 
+def closest_charger(x, y):
+    pairs = map(lambda p: (p[0]-x)**2 + (p[1]-y)**2, chargers)
+    return filter(lambda p: p[0] == min(pairs), zip(pairs, chargers))[0][1]
+
 def init_listener():
     # Set up all of the ROS subscriptions we'll listen to
     rospy.init_node('listener', anonymous=True)
