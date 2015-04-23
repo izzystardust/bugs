@@ -128,7 +128,7 @@ class Bug:
         g = current_location.global_to_local(necessary_heading(x, y, *self.target))
         at = current_dists.at(g)
         (_, left) = current_dists.get()
-        return at > 10 and left > 10
+        return at > 10# and left > WALL_PADDING
 
     def go(self, direction, speed):
         cmd = Twist()

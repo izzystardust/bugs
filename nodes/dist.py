@@ -51,10 +51,10 @@ class Dist:
                 return 0
         self.m.acquire()
         i = self.angle_to_index(angle)
-        start = i - 40
+        start = i - 100
         if start < 0:
             start = 0
-        end = i + 40
+        end = i + 100
         if end >= len(self.raw.ranges):
             end = len(self.raw.ranges) - 1
         ans = getmin(start, end)
