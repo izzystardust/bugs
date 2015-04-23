@@ -110,6 +110,11 @@ class Bug:
         print "Going to charger at ", self.target
         return "GO_UNTIL_OBSTACLE"
 
+    def return_to_start(self):
+        self.temp_loc = self.target
+        self.target = self.initial
+        print "Two minutes exceeded. Returning to start location."
+
     def goto_dest(self):
         self.target = self.temp_loc
         self.bat = 100
@@ -163,6 +168,7 @@ if __name__ == "__main__":
     (ix, iy, _) = current_location.current_location()
     bug.initial = (ix, iy)
     rospy.Timer(rospy.Duration(10), lambda _: bug.decr_battery())
+    rospy.Timer(rospy.Duration(120), lambda _: bug.return_to_start())
 
     while current_location.distance(*bug.target) > delta:
         bug.step()
