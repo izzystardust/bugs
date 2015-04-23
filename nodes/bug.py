@@ -24,6 +24,13 @@ LEFT = 1
 RIGHT = 2
 MSG_STOP = 3
 
+chargers = [
+    (0, 14),
+    (2, 2),
+    (-18, 3),
+    (6, -10),
+]
+
 def init_listener():
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber('base_pose_ground_truth', Odometry, location_callback)
@@ -110,6 +117,11 @@ class Bug:
         self.state = self.states[self.state](self) # did I stutter?
         rospy.sleep(.1)
 
+    def decr_battery(self):
+        self.bat -= 1
+        print "Bat:", self.bat
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print "Usage: rosrun bugs bug.py X Y"
@@ -125,6 +137,7 @@ if __name__ == "__main__":
     print "Calibrated"
     (ix, iy, _) = current_location.current_location()
     bug.initial = (ix, iy)
+    rospy.Timer(rospy.Duration(10), lambda _: bug.decr_battery())
 
     while current_location.distance(*bug.target) > delta:
         bug.step()
