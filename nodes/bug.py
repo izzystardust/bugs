@@ -48,38 +48,39 @@ class Bug:
         self.tx = tx
         self.ty = ty
         self.bat = 100
+        self.speed = 1
+        self.state = "GO_UNTIL_OBSTACLE"
         self.states = {
             'GO_UNTIL_OBSTACLE': lambda x: x.go_until_obstacle(),
             'FOLLOW_WALL': lambda x: x.follow_wall(),
         }
-        self.state = "GO_UNTIL_OBSTACLE"
 
     def go_until_obstacle(self):
         (front, _) = current_dists.get()
         if front <= WALL_PADDING:
             return "FOLLOW_WALL"
         if current_location.facing_point(tx, ty):
-            self.go(STRAIGHT)
+            self.go(STRAIGHT, self.speed)
         elif current_location.faster_left(tx, ty):
-            self.go(LEFT)
+            self.go(LEFT, self.speed)
         else:
-            self.go(RIGHT)
+            self.go(RIGHT, self.speed)
         return "GO_UNTIL_OBSTACLE"
 
     def follow_wall(self):
         if current_dists.get()[0] <= WALL_PADDING:
-            self.go(RIGHT)
+            self.go(RIGHT, self.speed)
             return "FOLLOW_WALL"
         if not self.should_leave_wall():
             (front, left) = current_dists.get()
             if front <= WALL_PADDING:
-                self.go(RIGHT)
+                self.go(RIGHT, self.speed)
             elif WALL_PADDING - .1 <= left <= WALL_PADDING + .1:
-                self.go(STRAIGHT)
+                self.go(STRAIGHT, self.speed)
             elif left > WALL_PADDING + .1:
-                self.go(LEFT)
+                self.go(LEFT, self.speed)
             else:
-                self.go(RIGHT)
+                self.go(RIGHT, self.speed)
             return "FOLLOW_WALL"
         else:
             return "GO_UNTIL_OBSTACLE"
@@ -94,10 +95,10 @@ class Bug:
             return True
         return False
 
-    def go(self, direction):
+    def go(self, direction, speed):
         cmd = Twist()
         if direction == STRAIGHT:
-            cmd.linear.x = 1
+            cmd.linear.x = speed
         elif direction == LEFT:
             cmd.angular.z = 0.25
         elif direction == RIGHT:
@@ -107,7 +108,8 @@ class Bug:
         self.pub.publish(cmd)
 
     def step(self):
-        self.state = self.states[self.state](self)
+        self.state = self.states[self.state](self) # did I stutter?
+        rospy.sleep(.1)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
